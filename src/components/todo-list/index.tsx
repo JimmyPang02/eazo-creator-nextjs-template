@@ -7,6 +7,7 @@ import { auth, storage, memory } from "@eazo/sdk";
 import { useEazo } from "@eazo/sdk/react";
 import { AddTodoForm, TodoItem } from "./todo-item";
 import { AiAnalysisPanel } from "./ai-analysis-panel";
+import { NotificationsToggle } from "@/components/notifications/notifications-toggle";
 import type { Todo } from "@/lib/db/schema/todos";
 import { getTodos, createTodo, updateTodo, deleteTodo, attachImage, removeAttachment } from "@/lib/api";
 
@@ -219,6 +220,9 @@ export function TodoListPage() {
           <AiAnalysisPanel todoCount={todos.length} onClose={() => setShowAiPanel(false)} />
         )}
       </div>
+
+      {/* Push notifications subscription + test publish */}
+      <NotificationsToggle />
 
       {/* Add form */}
       <div className="mb-5">

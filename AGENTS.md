@@ -9,7 +9,7 @@ This repository is a Bun-first, minimal Next.js starter for building apps that r
 - TypeScript
 - Tailwind CSS v4
 - Bun (package manager + local script runner)
-- `@eazo/sdk` — capability-first SDK: `auth`, `device`, `ai`, `storage`, `memory`, React integration, server-side `requireAuth`; bundles GenAuth login + ECC/AES session decryption internally; `ai` routes through AWS Bedrock via the Eazo AI gateway; `memory` records user actions as persistent, semantically searchable memory for AI context retrieval
+- `@eazo/sdk` — capability-first SDK: `auth`, `device`, `ai`, `storage`, `memory`, `notifications`, React integration, server-side `requireAuth` + `notifications.publish`; bundles GenAuth login + ECC/AES session decryption internally; `ai` routes through AWS Bedrock via the Eazo AI gateway; `memory` records user actions as persistent, semantically searchable memory for AI context retrieval; `notifications` opts users into per-app system push and lets the server fan out notifications to subscribers
 - shadcn/ui, lucide-react, framer-motion
 - Drizzle ORM (PostgreSQL via `drizzle-orm` + `postgres.js`)
 
@@ -23,6 +23,7 @@ This repository is a Bun-first, minimal Next.js starter for building apps that r
    - **Object Storage** — `src/app/api/todos/[id]/attachment/route.ts`
    - **AI** — `src/app/api/todos/analyze/route.ts`, `src/components/todo-list/ai-analysis-panel.tsx`
    - **Memory** — `src/components/todo-list/index.tsx` (fire-and-forget `memory.reportAction()` pattern after each mutation)
+   - **Notifications** — `src/components/notifications/notifications-toggle.tsx`, `src/app/api/notifications/test/route.ts`, `src/app/api/notifications/cron/daily-digest/route.ts`, `vercel.json#crons`
 4. Run `bun run cleanup:demo` before any feature development to remove all template demo artifacts.
 5. Update app metadata in `src/app/layout.tsx`.
 6. Replace the default content in `src/app/page.tsx`.
@@ -539,7 +540,49 @@ async function handleDelete(id: number) {
 
 See `src/components/todo-list/index.tsx` for a complete example of six todo mutations each reporting to Gum.
 
-## 7. MCP Server
+## 7. Notifications — System Push
+
+Apps can publish system push notifications to users who have subscribed inside Eazo Mobile. Two surfaces:
+
+**Client (`@eazo/sdk`)** — manage the per-(user, app) subscription bit:
+
+```ts
+import { notifications } from "@eazo/sdk";
+
+const { subscribed } = await notifications.isSubscribed();
+if (!subscribed) await notifications.subscribe();   // opt the current user in
+// later…
+await notifications.unsubscribe();
+```
+
+In a plain browser the methods resolve `{ subscribed: false }` and don't throw — apps render the right UI without special-casing. Inside Eazo Mobile the host writes the bit and the result reflects the new state.
+
+The template wires this via `src/components/notifications/notifications-toggle.tsx`, mounted on the todo list page.
+
+**Server (`@eazo/sdk/server`)** — fan out a notification to every subscriber:
+
+```ts
+import { notifications, EazoNotificationPublishError } from "@eazo/sdk/server";
+
+await notifications.publish({
+  appId: process.env.NEXT_PUBLIC_EAZO_APP_ID!,
+  title: "Daily reminder",
+  body: "Don't forget to review your tasks today.",
+  data: { source: "cron-daily-digest" },     // forwarded to the device tap handler
+  audience: "subscribers",                    // v1 only value
+});
+```
+
+The helper signs an ES256K JWT with `EAZO_PRIVATE_KEY` and POSTs to `/api/open/notifications/publish`. v1 hard-caps subscriber fan-out at 5,000 (`code: 413` if exceeded). The request is short-lived — your backend doesn't need to be long-running, just reachable when you want to publish.
+
+**Two example routes** ship with the template:
+
+- `POST /api/notifications/test` (`src/app/api/notifications/test/route.ts`) — gated by `requireAuth`. Drives the "Send test notification" button.
+- `GET /api/notifications/cron/daily-digest` (`src/app/api/notifications/cron/daily-digest/route.ts`) — Vercel Cron schedule (`vercel.json#crons`). Authenticates with `Authorization: Bearer ${CRON_SECRET}` (Vercel injects this automatically for cron-fired invocations). The default schedule is `0 17 * * *` (17:00 UTC daily) — adjust in `vercel.json`.
+
+**Tap deep-link**: when a user taps a notification published with `appId: <X>`, Eazo Mobile auto-routes to `/app/viewer?id=<X>` so they land back inside your app.
+
+## 8. MCP Server
 
 The template ships a built-in **MCP (Model Context Protocol) server** at `/api/mcp`. After running `bun run cleanup:demo`, all demo tools are removed and `src/lib/mcp/server.ts` is kept as a clean entry point ready for your own tools.
 
@@ -679,20 +722,22 @@ src/app/api/mcp/
   route.ts               — HTTP glue only (auth + transport + handler)
 ```
 
-## 8. Environment Variables
+## 9. Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `EAZO_PRIVATE_KEY` | Yes (server) | Hex-encoded 64-char private key; used by `requireAuth` to decrypt sessions |
-| `NEXT_PUBLIC_EAZO_APP_ID` | Yes (browser) | Eazo app ID; used when exchanging a GenAuth JWT for a session token |
+| `EAZO_PRIVATE_KEY` | Yes (server) | Hex-encoded 64-char private key; used by `requireAuth` to decrypt sessions and by `notifications.publish` to sign JWTs |
+| `NEXT_PUBLIC_EAZO_APP_ID` | Yes (browser + server) | Eazo app ID; used when exchanging a GenAuth JWT for a session token, and as the `appId` arg for `notifications.publish` |
+| `CRON_SECRET` | Yes if you ship the daily-digest cron | Shared secret Vercel Cron sends as `Authorization: Bearer …` when firing scheduled invocations |
 | `NEXT_PUBLIC_EAZO_API_URL` | Optional | Eazo platform backend URL exposed via `device.backendUrl` (web fallback) |
+| `EAZO_API_BASE` | Optional | Server-side override of the platform base URL for `notifications.publish` (defaults to `NEXT_PUBLIC_EAZO_API_URL` then `https://eazo.ai`) |
 | `DATABASE_URL` | If using DB | `postgresql://USER:PASS@HOST:PORT/DATABASE` |
 | `NEXT_PUBLIC_GENAUTH_APP_ID` | Optional | Override GenAuth App ID default |
 | `NEXT_PUBLIC_GENAUTH_APP_DOMAIN` | Optional | Override GenAuth tenant domain default |
 
 Copy `.env.example` to `.env` to configure locally.
 
-## 9. UI Components
+## 10. UI Components
 
 shadcn/ui is initialized. Available from `@/components/ui/`:
 
@@ -711,7 +756,7 @@ shadcn/ui is initialized. Available from `@/components/ui/`:
 
 Add more: `bunx shadcn@latest add <component>`. Icons: `lucide-react`. Animation: `framer-motion`.
 
-## 10. Adding New Pages
+## 11. Adding New Pages
 
 Each URL maps to a `page.tsx` under `src/app/`. Extract non-trivial UI into `src/components/<feature>/` and keep `page.tsx` as a thin entry point.
 
