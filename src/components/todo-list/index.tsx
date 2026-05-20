@@ -7,6 +7,7 @@ import { auth, storage, memory } from "@eazo/sdk";
 import { useEazo } from "@eazo/sdk/react";
 import { AddTodoForm, TodoItem } from "./todo-item";
 import { AiAnalysisPanel } from "./ai-analysis-panel";
+import { TodoStickySummary } from "./sticky-summary";
 import { NotificationsToggle } from "@/components/notifications/notifications-toggle";
 import type { Todo } from "@/lib/db/schema/todos";
 import { getTodos, createTodo, updateTodo, deleteTodo, attachImage, removeAttachment } from "@/lib/api";
@@ -132,6 +133,35 @@ export function TodoListPage() {
     }
   }
 
+  async function handleClearCompleted() {
+    // Snapshot the completed ids — local state is filtered optimistically
+    // first so the sticky bar's counter updates immediately. If any
+    // delete fails we re-fetch from server to converge.
+    const completed = todos.filter((t) => t.completed);
+    if (completed.length === 0) return;
+    setTodos((prev) => prev.filter((t) => !t.completed));
+    memory.reportAction({
+      content: `User cleared ${completed.length} completed todo${completed.length === 1 ? "" : "s"}`,
+      event_type: "clear_completed",
+      page: "todo_list",
+      metadata: {
+        type: "clear_completed",
+        count: completed.length,
+        todo_ids: completed.map((t) => t.id),
+      },
+    }).catch(() => {});
+    const results = await Promise.allSettled(completed.map((t) => deleteTodo(t.id)));
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast.error(
+        failed === completed.length
+          ? "Failed to clear completed todos"
+          : `Cleared ${completed.length - failed} of ${completed.length}; reloading`,
+      );
+      fetchTodos();
+    }
+  }
+
   const done = todos.filter((t) => t.completed).length;
 
   // Auth not yet resolved — show spinner
@@ -174,7 +204,10 @@ export function TodoListPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12">
+    // pb-28 leaves room for the fixed TodoStickySummary at the bottom so
+    // the last todo isn't tucked under it. The bar is ~64px tall; pb-28
+    // (7rem / 112px) clears it plus a breathing margin.
+    <div className="mx-auto max-w-xl px-4 pt-12 pb-28">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
@@ -254,6 +287,14 @@ export function TodoListPage() {
           ))}
         </div>
       )}
+
+      {/* Pinned bottom progress + clear-completed pills. Auto-hides
+       * when there are no todos. */}
+      <TodoStickySummary
+        total={todos.length}
+        done={done}
+        onClearCompleted={handleClearCompleted}
+      />
     </div>
   );
 }
