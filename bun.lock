@@ -6,7 +6,7 @@
       "name": "nextjs-template",
       "dependencies": {
         "@base-ui/react": "^1.4.0",
-        "@eazo/sdk": "0.11.0",
+        "@eazo/sdk": "0.17.0",
         "@modelcontextprotocol/sdk": "^1.29.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -109,7 +109,7 @@
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.10.2", "", {}, "sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w=="],
 
-    "@eazo/sdk": ["@eazo/sdk@0.11.0", "", { "dependencies": { "@radix-ui/react-dialog": "^1.1.4", "authing-js-sdk": "^4.23.55", "elliptic": "^6.6.1", "openai": "^6.34.0" }, "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"] }, "sha512-pKDl0e24Z7LYUWTyAADZRqNiKQIqiEHocUr59NmppDYsB2uM5EKzXerlTU0PJ8/Ewnt+6zbJrUFSueTMS8kKbg=="],
+    "@eazo/sdk": ["@eazo/sdk@0.17.0", "", { "dependencies": { "@radix-ui/react-dialog": "^1.1.4", "authing-js-sdk": "^4.23.55", "elliptic": "^6.6.1", "openai": "^6.34.0", "qrcode-generator": "^1.5.2" }, "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"] }, "sha512-fAgorfKuGwgMS0vDYjqrQx780M6beSTSAflAhaNARcdmc59PbnkeZ3YuD9HITCUtIngrg9tuF5En+9k220SWbw=="],
 
     "@ecies/ciphers": ["@ecies/ciphers@0.2.6", "", { "peerDependencies": { "@noble/ciphers": "^1.0.0" } }, "sha512-patgsRPKGkhhoBjETV4XxD0En4ui5fbX0hzayqI3M8tvNMGUoUvmyYAIWwlxBc1KX5cturfqByYdj5bYGRpN9g=="],
 
@@ -1216,6 +1216,8 @@
     "proxy-from-env": ["proxy-from-env@1.1.0", "", {}, "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg=="],
 
     "punycode": ["punycode@2.3.1", "", {}, "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg=="],
+
+    "qrcode-generator": ["qrcode-generator@1.5.2", "", {}, "sha512-pItrW0Z9HnDBnFmgiNrY1uxRdri32Uh9EjNYLPVC2zZ3ZRIIEqBoDgm4DkvDwNNDHTK7FNkmr8zAa77BYc9xNw=="],
 
     "qs": ["qs@6.15.1", "", { "dependencies": { "side-channel": "^1.1.0" } }, "sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg=="],
 
