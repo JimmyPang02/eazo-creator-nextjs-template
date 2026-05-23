@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
-import { EazoProvider } from "@eazo/sdk/react";
 import { cn } from "@/utils/utils";
-import { Toaster } from "@/components/ui/sonner";
-import { UserSyncEffect } from "@/components/user-profile/user-sync-effect";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -17,9 +14,8 @@ const SITE_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : undefined;
 
-const SITE_TITLE = "Eazo Developer Home";
-const SITE_DESCRIPTION =
-  "Developer onboarding, secure session flow, and backend verification examples.";
+const SITE_TITLE = "Sprout Brainstorm Assistant";
+const SITE_DESCRIPTION = "A tree-shaped brainstorming workspace for exploring and pruning ideas.";
 
 export const metadata: Metadata = {
   ...(SITE_URL ? { metadataBase: new URL(SITE_URL) } : {}),
@@ -60,13 +56,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
+    <html lang="zh-CN" className={cn("h-full antialiased", "font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col">
-        <EazoProvider>
-          <UserSyncEffect />
-          {children}
-          <Toaster />
-        </EazoProvider>
+        {children}
       </body>
     </html>
   );

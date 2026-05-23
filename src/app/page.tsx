@@ -1,18 +1,11 @@
-import { TodoListPage } from "@/components/todo-list";
-import { UserBadge } from "@/components/user-profile/user-badge";
-
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* Top-right user badge */}
-      <header className="absolute right-4 top-4 z-10">
-        <UserBadge />
-      </header>
-
-      {/* Main content */}
-      <main>
-        <TodoListPage />
-      </main>
-    </div>
+    <main className="min-h-screen bg-[#f7f3ec]">
+      <iframe
+        src="/brainstorm/index.html"
+        title="Sprout Brainstorm Assistant"
+        className="h-screen w-full border-0"
+      />
+    </main>
   );
 }
